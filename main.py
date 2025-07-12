@@ -1,6 +1,10 @@
-def main():
-    print("Hello from fastapi-webscokets!")
+import uvicorn
 
+from src.api.api import API
+
+
+app = API().create()
+    
 
 if __name__ == "__main__":
-    main()
+    uvicorn.run("main:app", reload=True, port=8000)
