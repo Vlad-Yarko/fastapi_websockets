@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-from src.schemas.base_exceptions import Authentication401
-from src.schemas.user import UserPublic, TokenPublic, CreateUser422, LoginUser422, LoginUser400, Token400, Token401, Token422, GetUser422
+from src.schemas.base_exceptions import Authentication403
+from src.schemas.user import UserPublic, TokenPublic, CreateUser422, LoginUser422, LoginUser400, Token400, Token403, Token422, GetUser422
 from src.api.dependencies.user import CreatedUser, LoginUser, IssuedToken, User
 
 # AUTHORIZATION IS ONLY FOR TEST!!!
@@ -43,7 +43,7 @@ async def login_user_hand(data: LoginUser):
             response_model=TokenPublic,
             responses={
                 400: {'model': Token400},
-                401: {'model': Token401},
+                403: {'model': Token403},
                 422: {'model': Token422}
             })
 async def issue_access_token_hand(data: IssuedToken):
@@ -55,7 +55,7 @@ async def issue_access_token_hand(data: IssuedToken):
             description="Gets all user info",
             response_model=UserPublic,
             responses={
-                401: {'model': Authentication401},
+                403: {'model': Authentication403},
                 422: {'model': GetUser422}
             })
 async def get_user_hand(data: User):

@@ -8,4 +8,13 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Credentials
+
 .env
+backend/.env
+
+src/keys/private_key.pem
+src/keys/public_key.pem
+backend/src/keys/private_key.pem
+backend/src/keys/public_key.pem

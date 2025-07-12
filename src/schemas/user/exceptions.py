@@ -19,7 +19,7 @@ class Token400(ExceptionSchema):
     detail: str = Field(examples=['Token id or user id has not found'])
     
     
-class Token401(ExceptionSchema):
+class Token403(ExceptionSchema):
     detail: str = Field(examples=['User is not authenticated. Refresh token has not found'])
     
     

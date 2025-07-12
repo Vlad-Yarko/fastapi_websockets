@@ -51,7 +51,7 @@ class UserDependencyFactory(DependencyFactory):
             userId: int = Path(..., examples=[1])) -> TokenPublic:
             if not refreshToken:
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    status_code=status.HTTP_403_UNAUTHORIZED,
                     detail="User is not authenticated. Refresh token has not found"
                 )
             data = await service.issue_token(refreshToken, userId)
@@ -69,7 +69,7 @@ class UserDependencyFactory(DependencyFactory):
             service: UserService = Depends(self.service_dep),
             token: str = Depends(self.token_dep()),
             id: int = Path(..., examples=[1])):
-            data = await service.get_user(id)
+            data = await service.get(id)
             if not data:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

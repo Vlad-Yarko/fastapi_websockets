@@ -1,6 +1,7 @@
-from typing import Callable, Awaitable, Type, Annotated
+from typing import Callable, Awaitable, Type
 
-from fastapi import Depends, HTTPException, status, Response, Path, Header
+from fastapi import Depends, HTTPException, status, Response, Path
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from src.utils.service import Service
 from src.types.dependency_factory import TSchemaBody, TSchemaPublic
@@ -16,28 +17,29 @@ class DependencyFactory:
         self.service_dep = service_dep
         self.SchemaBody = SchemaBody
         self.SchemaPublic = SchemaPublic
+        self.security = HTTPBearer()
         
     def token_dep(self) -> Callable[[], Awaitable[str]]:
         async def dep(
             service = Depends(self.service_dep),
-            authorization: str | None = Header(None)):
-            print("AUTH", authorization)
+            authorization: HTTPAuthorizationCredentials = Depends(self.security)):
+            data = authorization.model_dump()
             try:
-                h, token = authorization.split(' ')
-                if h.lower() != 'bearer':
+                if data.get("scheme") != "Bearer":
                     raise ValueError
-            except Exception:
+                token = data["credentials"]
+                d = await service.validate_token(token)
+                if isinstance(d, str):
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail=d
+                    )
+                return token
+            except (ValueError, KeyError):
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    status_code=status.HTTP_403_FORBIDDEN,
                     detail="Not authenticated"   
                 )
-            data = await service.validate_token(token)
-            if isinstance(id, str):
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail=data
-                )
-            return token
         return dep
         
     def create_dep(self) -> Callable[[], Awaitable[TSchemaPublic]]:

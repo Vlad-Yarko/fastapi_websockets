@@ -2,7 +2,7 @@ from typing import Optional
 from datetime import datetime, timedelta, UTC
 
 from jwt import encode, decode
-from jwt.exceptions import ExpiredSignatureError, DecodeError
+from jwt.exceptions import ExpiredSignatureError, DecodeError, InvalidSubjectError
 
 from src.config import settings
 
@@ -26,7 +26,7 @@ class Token:
         )
         return decoded_token
 
-    def create_access_token(self, id: int) -> str:
+    def create_access_token(self, id: str) -> str:
         now = datetime.now(UTC)
         iat = int(now.timestamp())
         exp = int((now + timedelta(minutes=15)).timestamp())
@@ -38,7 +38,7 @@ class Token:
         token = self.create_token(payload)
         return token
 
-    def create_refresh_token(self, id: int, expiration: Optional[int] = None) -> str:
+    def create_refresh_token(self, id: str, expiration: Optional[int] = None) -> str:
         now = datetime.now(UTC)
         iat = int(now.timestamp())
         exp = int((now + timedelta(days=30)).timestamp()) if not expiration else expiration
@@ -50,12 +50,12 @@ class Token:
         token = self.create_token(payload)
         return token
 
-    async def validate_token(self, token: Optional[str]) -> Optional[dict]:
+    def validate_token(self, token: Optional[str]) -> Optional[dict]:
         if not token:
             return None
         try:
             payload = self.decode_token(token)
-        except (ExpiredSignatureError, DecodeError):
+        except (ExpiredSignatureError, DecodeError, InvalidSubjectError):
             return None
         return payload
 

@@ -46,7 +46,7 @@ class UserService(Service):
         is_correct_pw = self.pw.check_password(body.password, user.password)
         if not is_correct_pw:
             return "Incorrect password"
-        refresh_token = await self.issue_refresh_token(str(user.id))
+        refresh_token = await self.issue_refresh_token(user.id)
         data = dict()
         token_id = str(uuid.uuid4())
         data["id"] = user.id
@@ -64,9 +64,9 @@ class UserService(Service):
         token = await self.redis_manager.get_string_data(full_id)
         if not token:
             return "Token id or user id has not found", status.HTTP_400_BAD_REQUEST
-        payload = await self.jwt.validate_token(token)
+        payload = self.jwt.validate_token(token)
         if not payload:
-            return "User is not authenticated. Refresh token has not found", status.HTTP_401_UNAUTHORIZED
+            return "User is not authenticated. Refresh token has not found", status.HTTP_403_UNAUTHORIZED
         if payload["sub"] != str(user_id):
             return "User id is invalid", status.HTTP_422_UNPROCESSABLE_ENTITY,
         token_id = str(uuid.uuid4())
