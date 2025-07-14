@@ -1,7 +1,24 @@
+import { useContext, useEffect } from 'react'
+
+import { NotificationContext } from '../../../context/NotificationContext'
+
 // import './Home.css'
 
 
 function Home() {
+    const { notifications, setNotifications } = useContext(NotificationContext)
+
+    useEffect(() => {
+        const websocket = NotificationWebsocket(
+            '',
+            setNotifications
+        )
+        websocket.connect()
+        
+        return () => {
+            websocket?.disconnect()
+        }
+    }, [])
 
     return (
             <div className="min-h-screen bg-gray-100">
@@ -19,9 +36,11 @@ function Home() {
                                 <div id="notificationPanel" className="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg">
                                     <div className="p-4">
                                         <h3 className="text-lg font-semibold mb-2">Notifications</h3>
-                                        <div id="notificationList" className="space-y-2">
-                                            {/* <!-- Notifications will be inserted here --> */}
-                                        </div>
+                                        <ul id="notificationList" className="space-y-2">
+                                            {notifications.length >= 1 ?
+                                            notifications.map(element => <li key={element.id}>{element.shortMessage}</li>) :
+                                            null}                                       
+                                        </ul>
                                     </div>
                                 </div>
                             </div>

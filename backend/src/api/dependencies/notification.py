@@ -7,6 +7,7 @@ from src.services import NotificationService
 from src.repositories import NotificationRepository, UserRepository
 from src.schemas.notification import NotificationBody, LatestNotificationsPublic, NotificationPublic
 from src.utils.dependency_factory import DependencyFactory
+from src.api.websockets.notification import ws_notification_manager
 
 
 async def service_dep(session: DBSession) -> NotificationService:
@@ -14,6 +15,11 @@ async def service_dep(session: DBSession) -> NotificationService:
         session=session,
         notification_repo=NotificationRepository,
         user_repo=UserRepository)
+    
+    
+async def alert_func(data):
+    id = int(data.get('id'))
+    await ws_notification_manager.broadcast(id, data)
 
 
 class NotificationDependencyFactory(DependencyFactory):
@@ -21,7 +27,8 @@ class NotificationDependencyFactory(DependencyFactory):
         super().__init__(
             service_dep=service_dep,
             SchemaBody=NotificationBody,
-            SchemaPublic=NotificationPublic
+            SchemaPublic=NotificationPublic,
+            alert_func=alert_func
         )
         
     def get_latest_notifications_dep(self) -> Callable[[], Awaitable[LatestNotificationsPublic]]:

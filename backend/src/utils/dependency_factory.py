@@ -1,10 +1,11 @@
-from typing import Callable, Awaitable, Type
+from typing import Callable, Awaitable, Type, Optional, Union, Annotated
 
-from fastapi import Depends, HTTPException, status, Response, Path
+from fastapi import Depends, HTTPException, status, Response, Path, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from src.utils.service import Service
 from src.types.dependency_factory import TSchemaBody, TSchemaPublic
+from src.models import Base
 
 
 class DependencyFactory:
@@ -12,17 +13,19 @@ class DependencyFactory:
         self,
         service_dep: Callable[[], Awaitable[Service]],
         SchemaBody: Type[TSchemaBody],
-        SchemaPublic: Type[TSchemaPublic]
+        SchemaPublic: Type[TSchemaPublic],
+        alert_func: Optional[function] = None
     ):
         self.service_dep = service_dep
         self.SchemaBody = SchemaBody
         self.SchemaPublic = SchemaPublic
         self.security = HTTPBearer()
+        self.alert_func = alert_func
         
-    def token_dep(self) -> Callable[[], Awaitable[str]]:
+    def token_dep(self) -> Callable[[], Awaitable[dict]]:
         async def dep(
             service = Depends(self.service_dep),
-            authorization: HTTPAuthorizationCredentials = Depends(self.security)):
+            authorization: HTTPAuthorizationCredentials = Depends(self.security)) -> dict:
             data = authorization.model_dump()
             try:
                 if data.get("scheme") != "Bearer":
@@ -34,7 +37,7 @@ class DependencyFactory:
                         status_code=status.HTTP_403_FORBIDDEN,
                         detail=d
                     )
-                return token
+                return d
             except (ValueError, KeyError):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
@@ -54,7 +57,11 @@ class DependencyFactory:
                     detail=data,
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
                 )
-            response = self.SchemaPublic(**body.model_dump(), id=data)
+            d = body.model_dump()
+            d["id"] = data
+            if self.alert_func:
+                await self.alert_func(d)
+            response = self.SchemaPublic(**d)
             return response
         return dep
     
@@ -86,3 +93,18 @@ class DependencyFactory:
             samesite="none",
             max_age=max_age
         )
+        
+    def websocket_token_dep(self) -> Callable[[], Awaitable[Union[str, dict]]]:
+        async def dep(
+            service: Service = Depends(self.service_dep),
+            token: str = Query(..., examples=["adfadfadf"])
+        ) -> Union[str, dict]:
+                data = await service.validate_token(token)
+                return data
+        return dep
+        
+        
+dep_factory = DependencyFactory()
+
+
+WSToken = Annotated[Union[str, Base], Depends(dep_factory.websocket_token_dep())]

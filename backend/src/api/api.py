@@ -20,8 +20,7 @@ class API(Application):
             user_router
         ]
         self.websockets = [
-            WebSocketRoute("/ws/pingpong", WSPingPong),
-            WebSocketRoute("/ws/notifications", WSNotification)
+            WebSocketRoute(WSNotification.WEBSOCKET_PATH, WSNotification)
         ]
     
     @staticmethod
