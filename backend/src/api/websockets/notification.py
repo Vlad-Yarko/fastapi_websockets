@@ -1,18 +1,19 @@
-from typing import Union
-import uuid
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from src.utils.ws_manager import WSManager
-
-
-class WSNotification(WSManager):
-    WEBSOCKET_PATH = "/ws/notifications"
-    
-    async def broadcast(self, user_id: Union[int, uuid.UUID], data: dict) -> None:
-        d = dict()
-        d["type"] = "notification"
-        d["shortMessage"] = data.get("shortMessage")
-        for websocket in self.active_connections.get(user_id, []):
-            await websocket.send_json(d)
+from src.api.managers import notification_manager
+from src.api.dependencies.notification import WSToken
 
 
-ws_notification_manager = WSNotification()
+router = APIRouter()
+
+
+@router.websocket("/ws/notifications")
+async def notifications_websocket(websocket: WebSocket, user: WSToken):
+    connection = await notification_manager.connect(websocket, user)
+    if not connection:
+        return
+    try:
+        while True:
+            await notification_manager.receive(websocket)
+    except WebSocketDisconnect:
+        await notification_manager.disconnect(websocket, user)

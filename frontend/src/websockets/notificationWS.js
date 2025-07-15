@@ -2,20 +2,18 @@ import BaseWebsocket from "../utils/baseWS";
 
 
 class NotificationWebsocket extends BaseWebsocket {
-    WEBSOCKET_ENDPOINT = "/ws/notifications"
 
     constructor(token, setNotifications) {
-        super(token)
+        super(token, '/ws/notifications')
 
         this.setNotifications = setNotifications
     }
 
     handleJSON(event) {
-        super.handleJSON(event)
-
         const data = JSON.parse(event.data)
+        super.handleJSON(event, data)
         if (data.type === "notification") {
-            this.setNotifications({shortMessage: data.shortMessage})
+            this.setNotifications(prevNotifications => [data, ...prevNotifications])
         }
     }
 }

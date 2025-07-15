@@ -20,7 +20,7 @@ class API(Application):
             user_router
         ]
         self.websockets = [
-            WebSocketRoute(WSNotification.WEBSOCKET_PATH, WSNotification)
+            ws_notification_router
         ]
     
     @staticmethod
@@ -39,7 +39,7 @@ class API(Application):
         for router in self.routers:
             self.app.include_router(router)
         for websocket in self.websockets:
-            self.app.router.routes.append(websocket)
+            self.app.include_router(websocket)
         return self.app
     
     def run():

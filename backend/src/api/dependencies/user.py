@@ -51,7 +51,7 @@ class UserDependencyFactory(DependencyFactory):
             userId: int = Path(..., examples=[1])) -> TokenPublic:
             if not refreshToken:
                 raise HTTPException(
-                    status_code=status.HTTP_403_UNAUTHORIZED,
+                    status_code=status.HTTP_403_FORBIDDEN,
                     detail="User is not authenticated. Refresh token has not found"
                 )
             data = await service.issue_token(refreshToken, userId)

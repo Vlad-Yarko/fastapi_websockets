@@ -11,10 +11,10 @@ from src.models import Base
 class DependencyFactory:
     def __init__(
         self,
-        service_dep: Callable[[], Awaitable[Service]],
-        SchemaBody: Type[TSchemaBody],
-        SchemaPublic: Type[TSchemaPublic],
-        alert_func: Optional[function] = None
+        service_dep: Optional[Callable[[], Awaitable[Service]]] = None,
+        SchemaBody: Optional[Type[TSchemaBody]] = None,
+        SchemaPublic: Optional[Type[TSchemaPublic]] = None,
+        alert_func: Optional[Callable[[], Awaitable]] = None
     ):
         self.service_dep = service_dep
         self.SchemaBody = SchemaBody
@@ -102,9 +102,3 @@ class DependencyFactory:
                 data = await service.validate_token(token)
                 return data
         return dep
-        
-        
-dep_factory = DependencyFactory()
-
-
-WSToken = Annotated[Union[str, Base], Depends(dep_factory.websocket_token_dep())]

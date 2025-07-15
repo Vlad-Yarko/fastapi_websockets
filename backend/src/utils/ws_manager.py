@@ -1,52 +1,48 @@
-from typing import Union
-import uuid
-from abc import ABC, abstractmethod
 import asyncio
 
-from fastapi import WebSocket, WebSocketDisconnect
-from starlette.endpoints import WebSocketEndpoint
+from fastapi import WebSocket, status
 
 from src.utils.conn_manager import connection_manager
-from src.utils.dependency_factory import WSToken
 
+class WSManager:
 
-class WSManager(ABC, WebSocketEndpoint):
-    encoding = "json"
-    WEBSOCKET_PATH = None
-
-    async def on_connect(self, websocket: WebSocket, user: WSToken) -> None:
-        await websocket.accept()
-        connection_manager.active_connections[user.id].add(websocket)
-        connection_manager.active_tasks[websocket] = (asyncio.create_task(self.ping_loop(websocket, user.id)))
-        connection_manager.websocket_to_user_id[websocket] = user.id
-
-    async def on_disconnect(self, websocket: WebSocket) -> None:
+    async def connect(self, websocket: WebSocket, user) -> bool:
+        if isinstance(user, str):
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return False
         try:
-            user_id = connection_manager.websocket_to_user_id[websocket]
-            del connection_manager.websocket_to_user_id[websocket]
-            connection_manager.active_connections[user_id].discard(websocket)
+            await websocket.accept()
+        except RuntimeError:
+            return False
+        connection_manager.active_connections[user.id].add(websocket)
+        connection_manager.active_tasks[websocket] = (asyncio.create_task(self.ping_loop(websocket)))
+        return True
+        
+    async def disconnect(self, websocket: WebSocket, user) -> None:
+        try:
+            connection_manager.active_connections[user.id].discard(websocket)
             task = connection_manager.active_tasks[websocket]
             task.cancel()
-            connection_manager.active_tasks[websocket].discard(task)
+            del connection_manager.active_tasks[websocket]
         except asyncio.CancelledError:
             pass
         except KeyError:
-            return
-        if not connection_manager.active_connections[user_id]:
-            del connection_manager.active_connections[user_id]
-
-    async def on_receive(self, websocket: WebSocket, data):
-        if data.get("type") == "ping":
             pass
-    
-    async def ping_loop(self, websocket: WebSocket, user_id: Union[int, uuid.UUID]):
-        # try:
-            while True:
-                await websocket.send_json({'type': 'ping'})
-                asyncio.sleep(10)
-        # except WebSocketDisconnect:
-        #     await self  
+        if not connection_manager.active_connections[user.id]:
+            try:
+                del connection_manager.active_connections[user.id]
+            except KeyError:
+                return
 
-    @abstractmethod
-    async def broadcast(self):
-        raise NotImplementedError
+    async def receive(self, websocket: WebSocket) -> None:
+        data = await websocket.receive_json()
+        if data and data.get("type") == "pong":
+            pass
+        
+    async def send_ping(self, websocket: WebSocket) -> None:
+        await websocket.send_json({'type': 'ping'}) 
+    
+    async def ping_loop(self, websocket: WebSocket) -> None:
+        while True:
+            await self.send_ping(websocket)
+            await asyncio.sleep(10) 

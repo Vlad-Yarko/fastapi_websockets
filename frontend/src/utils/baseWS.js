@@ -1,37 +1,40 @@
 import API_DOMAIN from '../constants/api'
 
 
-class BaseWebsocket {
-    WEBSOCKET_ENDPOINT = "/ws"
-    
+class BaseWebsocket {    
 
-    constructor(token) {
+    constructor(token, endpoint) {
         this.websocket = null
-        this.WEBSOCKET_PATH = `ws://${API_DOMAIN}${this.WEBSOCKET_ENDPOINT}?token=${token}`
+        this.WEBSOCKET_PATH = `ws://${API_DOMAIN}${endpoint}?token=${token}`
     }
 
-    connect(token) {
-        this.websocket = new WebSocket(this.WEBSOCKET_PATH)
+    connect() {
+        try {
+            this.websocket = new WebSocket(this.WEBSOCKET_PATH)
+        } catch (error) {
+            console.log("PUK")
+        }
 
-        this.websocket.onmessage = (event) => this.handleJSON(event)
+
+        this.websocket.onmessage = (event) => this.handleJSON(event, {})
 
         this.websocket.onclose = () => {
 
         }
         this.websocket.onerror = (error) => {
-            this.ws?.close()
+            this.websocket?.close()
+            console.log(error)
         }
     }
 
-    handleJSON(event) {
-        const data = JSON.parse(event.data)
+    handleJSON(event, data) {
         if (data.type == "ping") {
-            this.ws?.send(JSON.stringify({type: "pong"}))
+            this.websocket?.send(JSON.stringify({ type: 'pong' }))
         }
     }
 
     disconnect() {
-        this.ws?.close()
+        this.websocket?.close()
     }
 
 }
