@@ -14,7 +14,7 @@ router = APIRouter(
 )
 
 
-@router.post('/',
+@router.post('',
             summary="Create a user",
             description="**Creates** a user for **authorization**",
             response_model=UserPublic,

@@ -1,0 +1,15 @@
+VALID_USERNAME = "mister_business"
+VALID_PASSWORD = "12345678"
+INVALID_USERNAME = "m"
+INVALID_PASSWORD = "12345"
+
+VALID_USER_PAYLOAD = {
+    "username": VALID_USERNAME,
+    "password": VALID_PASSWORD
+}
+INVALID_USER_PAYLOAD = {
+    "username": INVALID_USERNAME,
+    "password": INVALID_PASSWORD
+}
+
+

@@ -1,20 +1,18 @@
+import os
 from contextlib import asynccontextmanager
 
-from sqlalchemy import create_engine, Column, Integer, String, Boolean
-from sqlalchemy.orm import sessionmaker, declarative_base, DeclarativeBase
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
     async_sessionmaker,
-    AsyncConnection,
-    AsyncSession,
-    AsyncEngine,
+    AsyncEngine
 )
 
+from src.utils.db_manager import DatabaseManager
 from src.config import settings
 
 
-class PostgresManager:
-    SQLALCHEMY_DATABASE_URL = settings.POSTGRES
+class PostgresManager(DatabaseManager):
+    SQLALCHEMY_DATABASE_URL = settings.POSTGRES if settings.TEST_ENVIRONMENT == "false" else settings.TEST_POSTGRES
 
     def __init__(self):
         self.__engine: AsyncEngine | None = None

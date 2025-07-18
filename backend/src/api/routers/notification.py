@@ -18,7 +18,7 @@ async def get_notifications_hand(data: LatestNotifications):
     return data
 
 
-@router.post('/',
+@router.post('',
             summary="Creates notification",
             description="**Creates** notification for **user**",
             response_model=NotificationPublic,

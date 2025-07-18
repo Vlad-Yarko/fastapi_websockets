@@ -12,7 +12,12 @@ load_dotenv(find_dotenv())
 
 class Settings(BaseSettings):
     
+    TEST_ENVIRONMENT: str
     POSTGRES: str
+    TEST_POSTGRES: str
+    REDIS: str
+    TEST_REDIS: str
+    
     
     PRIVATE_KEY: ClassVar[str] = (BASE_DIR / 'keys/private_key.pem').read_text()
     PUBLIC_KEY: ClassVar[str] = (BASE_DIR / 'keys/public_key.pem').read_text()
